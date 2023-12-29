@@ -1,5 +1,7 @@
+require('dotenv').config();
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
+
 
 const app = express();
 app.use(express.json());
@@ -9,8 +11,29 @@ const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
 
 
+const apiKeyMiddleware = (req, res, next) => {
+    const userApiKey = req.header('x-api-key');
+
+    if (userApiKey && userApiKey === process.env.API_KEY) { 
+        next(); 
+    } else {
+        res.status(401).send('Unauthorized: Invalid API Key');
+    }
+};
+
+app.use(apiKeyMiddleware)
+
 app.get("/", (req, res) => {
     res.send('Hello World!')
+})
+
+app.get("/user", async (req, res) => {
+    try {
+        const users = await prisma.user.findMany()
+        res.json({users})
+    } catch(e) {
+        res.status(500).json({'error': e.message})
+    }
 })
 
 app.post("/user", async (req, res) => {
@@ -34,6 +57,37 @@ app.post("/user", async (req, res) => {
     }
 
 })
+
+app.get("/user/:userId/entries", async (req, res) => {
+    try {
+        const userId = parseInt(req.params.userId);
+
+        const entries = await prisma.entry.findMany({
+            where: {
+                userId: userId
+            }
+        })
+
+        if (entries.length === 0) {
+            return res.status(404).json({ message: "No entries found for this user." });
+        }
+
+        res.json({entries})
+    } catch(e) {
+        res.status(500).json({'error': e.message})
+    }
+})
+
+app.get("/entry", async (req, res) => {
+    try {
+        const entries = await prisma.entry.findMany()
+        res.json({entries})
+    } catch(e) {
+        res.status(500).json({'error': e.message})
+    }
+})
+
+
 
 app.post("/entry", async (req, res) => {
     const {userId, content} = req.body

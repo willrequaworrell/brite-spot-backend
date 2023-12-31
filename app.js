@@ -1,6 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken')
 
 
 const app = express();
@@ -36,15 +38,20 @@ app.get("/user", async (req, res) => {
     }
 })
 
-app.post("/user", async (req, res) => {
+app.post("/signup", async (req, res) => {
     try {
         const {email, first_name, password} = req.body
-        
+
+        // hash password
+        const salt = bcrypt.genSaltSync(10);
+        const hashedPassword = bcrypt.hashSync(password, salt);
+     
+
         const newUser = await prisma.user.create({
             data: {
                 email, 
                 first_name, 
-                password,
+                password: hashedPassword,
             }
         })
         res.json({
@@ -55,6 +62,24 @@ app.post("/user", async (req, res) => {
     } catch (e) {
         res.status(500).json({'error': e.message})
     }
+
+})
+
+app.post("/login", async (req, res) => {
+    const { email, password } = req.body;
+    
+    try {
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (user && bcrypt.compareSync(password, user.password)) {
+            const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '24h' });
+            res.json(token)
+        } else {
+            res.status(401).send('Invalid credentials');
+        }
+    } catch (e) {
+        res.status(500).json({ 'error': e.message });
+    }
+
 
 })
 

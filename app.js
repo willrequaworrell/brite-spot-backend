@@ -31,7 +31,7 @@ app.get("/", (req, res) => {
     res.send('Hello World!')
 })
 
-app.get("/user", async (req, res) => {
+app.get("/users", async (req, res) => {
     try {
         const users = await prisma.user.findMany()
         res.json({users})
@@ -41,6 +41,7 @@ app.get("/user", async (req, res) => {
 })
 
 app.post("/signup", async (req, res) => {
+    console.log("first")
     try {
         const {email, first_name, password} = req.body
 
@@ -69,6 +70,7 @@ app.post("/signup", async (req, res) => {
 
 app.post("/login", async (req, res) => {
     const { email, password } = req.body;
+    console.log("hi", email, password)
     
     try {
         const user = await prisma.user.findUnique({ where: { email } });
@@ -82,6 +84,18 @@ app.post("/login", async (req, res) => {
         res.status(500).json({ 'error': e.message });
     }
 
+
+})
+
+app.get("/user/:userId", async (req, res) => {
+    try {
+        const userId = parseInt(req.params.userId);
+
+        const userData = await prisma.user.findUnique({where: {id: userId}})
+        res.json({userData})
+    } catch (e) {
+        console.log(e)
+    }
 
 })
 

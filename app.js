@@ -4,6 +4,7 @@ const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken')
+var pos = require('pos');
 
 
 const app = express();
@@ -11,6 +12,7 @@ app.use(express.json());
 app.use(cors())
 
 const prisma = new PrismaClient();
+let tagger = new pos.Tagger();
 
 const PORT = process.env.PORT || 3000;
 
@@ -76,7 +78,8 @@ app.post("/login", async (req, res) => {
         const user = await prisma.user.findUnique({ where: { email } });
         if (user && bcrypt.compareSync(password, user.password)) {
             const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '24h' });
-            res.json(token)
+            // console.log(token)
+            res.json({jwt: token})
         } else {
             res.status(401).send('Invalid credentials');
         }
@@ -86,8 +89,9 @@ app.post("/login", async (req, res) => {
 
 
 })
-
+//dafdaf
 app.get("/user/:userId", async (req, res) => {
+    console.log("hit ")
     try {
         const userId = parseInt(req.params.userId);
 
@@ -119,6 +123,51 @@ app.get("/user/:userId/entries", async (req, res) => {
     }
 })
 
+app.get("/user/:userId/entries/combined", async (req, res) => {
+    try {
+        const userId = parseInt(req.params.userId);
+
+        const entries = await prisma.entry.findMany({
+            where: {
+                userId: userId
+            }
+        })
+
+        if (entries.length === 0) {
+            return res.status(404).json({ message: "No entries found for this user." });
+        }
+        let combinedEntries = ""
+        for (entry of entries) {
+            combinedEntries += `${entry.content} `
+        }
+        console.log(combinedEntries)
+        let words = new pos.Lexer().lex(combinedEntries)
+        let taggedWords = tagger.tag(words);
+        // console.log(taggedWords)
+        const allowedTags = [
+            'CD', 'JJ', 'JJR', 'JJS', 'MD',
+            'NN', 'NNP', 'NNPS', 'NNS', 'RB',
+            'RBR', 'RBS', 'VB', 'VBD', 'VBG',
+            'VBN', 'VBP', 'VBZ'
+        ];
+        let filteredWords = taggedWords.filter(item => allowedTags.includes(item[1]));
+        const uniqueWords = new Set(filteredWords.map(item => item[0].toLowerCase()));
+        const wordCounts = new Map();
+        filteredWords.forEach(item => {
+            const word = item[0].toLowerCase()
+            const count = wordCounts.has(word) ? wordCounts.get(word) + 1 : 1
+            wordCounts.set(word, count)
+        });
+        const wordCountsArray = Array.from(wordCounts.entries()).map(([word, count]) => ({ text: word, value: count }))
+        // console.log(filteredWords)
+        // console.log(wordCountsArray)
+    
+        res.json({wordCountsArray})
+    } catch(e) {
+        res.status(500).json({'error': e.message})
+    }
+})
+
 app.get("/entry", async (req, res) => {
     try {
         const entries = await prisma.entry.findMany()
@@ -132,6 +181,7 @@ app.get("/entry", async (req, res) => {
 
 app.post("/entry", async (req, res) => {
     const {userId, content} = req.body
+    // console.log(content)
 
     try {
         const userExists = await prisma.user.findUnique({
@@ -150,12 +200,36 @@ app.post("/entry", async (req, res) => {
                 }
             }
         })
-
+        console.log(newEntry)
         res.json({"status": "success", "newEntry": newEntry})
     } catch (e) {
         res.status(500).json(e.message)
     }
 })
+
+app.delete("/entry/:entryId", async (req, res) => {
+    try {
+        const entryId = parseInt(req.params.entryId);
+
+        const entryExists = await prisma.entry.findUnique({
+            where: { id: entryId },
+        });
+
+        if (!entryExists) {
+            return res.status(404).json({ message: "Entry not found" });
+        }
+
+        // Delete the entry
+        await prisma.entry.delete({
+            where: { id: entryId },
+        });
+
+        res.json({ status: "success", message: "Entry deleted successfully" });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: e.message });
+    }
+});
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

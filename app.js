@@ -72,7 +72,7 @@ app.post("/signup", async (req, res) => {
 
 app.post("/login", async (req, res) => {
     const { email, password } = req.body;
-    console.log("hi", email, password)
+    // console.log("hi", email, password)
     
     try {
         const user = await prisma.user.findUnique({ where: { email } });
@@ -91,7 +91,6 @@ app.post("/login", async (req, res) => {
 })
 //dafdaf
 app.get("/user/:userId", async (req, res) => {
-    console.log("hit ")
     try {
         const userId = parseInt(req.params.userId);
 
@@ -122,6 +121,30 @@ app.get("/user/:userId/entries", async (req, res) => {
         res.status(500).json({'error': e.message})
     }
 })
+
+app.get("/user/:userId/entries/today", async (req, res) => {
+    try {
+        const userId = parseInt(req.params.userId);
+
+        const entry = await prisma.entry.findFirst({
+            where: {
+                userId: userId
+            },
+            orderBy: {
+                createdAt: 'desc'
+            }
+        })
+
+        if (!entry) {
+            return res.status(404).json({ message: "none" });
+        }
+
+        res.json({entry})
+    } catch(e) {
+        res.status(500).json({'error': e.message})
+    }
+})
+
 
 app.get("/user/:userId/entries/combined", async (req, res) => {
     try {

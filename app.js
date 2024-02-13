@@ -113,7 +113,7 @@ app.get("/user/:userId/entries", async (req, res) => {
         })
 
         if (entries.length === 0) {
-            return res.status(404).json({ message: "No entries found for this user." });
+            return res.json({status: "none", message: "no entries found" });
         }
 
         res.json({entries})
@@ -131,22 +131,23 @@ app.get("/user/:userId/entries/today", async (req, res) => {
                 userId: userId
             },
             orderBy: {
-                createdAt: 'desc'
+                date: 'desc'
             }
         })
 
         if (!entry) {
-            return res.status(404).json({ message: "none" });
+            return res.json({status: "none", message: "no entries found" });
         }
 
         res.json({entry})
     } catch(e) {
-        res.status(500).json({'error': e.message})
+        res.status(500).json({status: "error", message: e.message})
     }
 })
 
 
 app.get("/user/:userId/entries/combined", async (req, res) => {
+    let wordCountsArray
     try {
         const userId = parseInt(req.params.userId);
 
@@ -155,10 +156,14 @@ app.get("/user/:userId/entries/combined", async (req, res) => {
                 userId: userId
             }
         })
+        
 
         if (entries.length === 0) {
-            return res.status(404).json({ message: "No entries found for this user." });
+            wordCountsArray = []
+            res.json({wordCountsArray})
+            return
         }
+        
         let combinedEntries = ""
         for (entry of entries) {
             combinedEntries += `${entry.content} `
@@ -181,12 +186,13 @@ app.get("/user/:userId/entries/combined", async (req, res) => {
             const count = wordCounts.has(word) ? wordCounts.get(word) + 1 : 1
             wordCounts.set(word, count)
         });
-        const wordCountsArray = Array.from(wordCounts.entries()).map(([word, count]) => ({ text: word, value: count }))
+        wordCountsArray = Array.from(wordCounts.entries()).map(([word, count]) => ({ text: word, value: count }))
         // console.log(filteredWords)
         // console.log(wordCountsArray)
     
         res.json({wordCountsArray})
     } catch(e) {
+        console.log(e)
         res.status(500).json({'error': e.message})
     }
 })

@@ -29,9 +29,7 @@ const apiKeyMiddleware = (req, res, next) => {
 
 app.use(apiKeyMiddleware)
 
-app.get("/", (req, res) => {
-    res.send('Hello World!')
-})
+
 
 app.get("/users", async (req, res) => {
     try {
@@ -89,7 +87,8 @@ app.post("/login", async (req, res) => {
 
 
 })
-//dafdaf
+
+
 app.get("/user/:userId", async (req, res) => {
     try {
         const userId = parseInt(req.params.userId);
@@ -109,6 +108,9 @@ app.get("/user/:userId/entries", async (req, res) => {
         const entries = await prisma.entry.findMany({
             where: {
                 userId: userId
+            },
+            orderBy: {
+                date: 'desc'
             }
         })
 

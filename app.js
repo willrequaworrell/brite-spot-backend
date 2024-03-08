@@ -29,7 +29,9 @@ const apiKeyMiddleware = (req, res, next) => {
 
 app.use(apiKeyMiddleware)
 
-
+app.get("/", async (req, res) => {
+    res.send("IT DO BE WORKIN!")
+})
 
 app.get("/users", async (req, res) => {
     try {
@@ -63,6 +65,10 @@ app.post("/signup", async (req, res) => {
         })
         
     } catch (e) {
+        if (e.code == "P2002") {
+            e.message = "A user with that email already exists"
+        }
+        console.log(e.message)
         res.status(500).json({'error': e.message})
     }
 
@@ -70,7 +76,7 @@ app.post("/signup", async (req, res) => {
 
 app.post("/login", async (req, res) => {
     const { email, password } = req.body;
-    // console.log("hi", email, password)
+    console.log("hi", email, password)
     
     try {
         const user = await prisma.user.findUnique({ where: { email } });
@@ -183,10 +189,13 @@ app.get("/user/:userId/entries/combined", async (req, res) => {
         let filteredWords = taggedWords.filter(item => allowedTags.includes(item[1]));
         const uniqueWords = new Set(filteredWords.map(item => item[0].toLowerCase()));
         const wordCounts = new Map();
+        const wordsToSkip = new Set(["had", "was"])
         filteredWords.forEach(item => {
             const word = item[0].toLowerCase()
-            const count = wordCounts.has(word) ? wordCounts.get(word) + 1 : 1
-            wordCounts.set(word, count)
+            if (!wordsToSkip.has(word)) {
+                const count = wordCounts.has(word) ? wordCounts.get(word) + 1 : 1
+                wordCounts.set(word, count)
+            }
         });
         wordCountsArray = Array.from(wordCounts.entries()).map(([word, count]) => ({ text: word, value: count }))
         // console.log(filteredWords)

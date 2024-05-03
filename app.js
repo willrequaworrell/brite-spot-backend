@@ -179,7 +179,6 @@ app.get("/user/:userId/entries/combined", async (req, res) => {
         console.log(combinedEntries)
         let words = new pos.Lexer().lex(combinedEntries)
         let taggedWords = tagger.tag(words);
-        // console.log(taggedWords)
         const allowedTags = [
             'CD', 'JJ', 'JJR', 'JJS', 'MD',
             'NN', 'NNP', 'NNPS', 'NNS', 'RB',
@@ -198,8 +197,6 @@ app.get("/user/:userId/entries/combined", async (req, res) => {
             }
         });
         wordCountsArray = Array.from(wordCounts.entries()).map(([word, count]) => ({ text: word, value: count }))
-        // console.log(filteredWords)
-        // console.log(wordCountsArray)
     
         res.json({wordCountsArray})
     } catch(e) {
@@ -221,7 +218,6 @@ app.get("/entry", async (req, res) => {
 
 app.post("/entry", async (req, res) => {
     const {userId, content} = req.body
-    // console.log(content)
 
     try {
         const userExists = await prisma.user.findUnique({

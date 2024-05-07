@@ -10,6 +10,8 @@ With _BriteSpot_, as long as you can remember a single bright (brite) moment fro
 
 BriteSpot's frontend is built in React, styled using Tailwind CSS and hosted on Vercel. The backend is built using Express.js, MySQL and Prisma and is hosted on AWS RDS & EC2 
 
+Frontend Repo: https://github.com/willrequaworrell/brite-spot-frontend
+
 **View a demo here:**
 
 https://youtu.be/ZprbtriZI90

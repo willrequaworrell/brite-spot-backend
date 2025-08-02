@@ -23,7 +23,7 @@ const apiKeyMiddleware = (req, res, next) => {
     if (userApiKey && userApiKey === process.env.API_KEY) { 
         next(); 
     } else {
-        res.status(401).send('Unauthorized: Invalid API Key', userApiKey, process.env.API_KEY);
+        res.status(401).send(`Unauthorized: Invalid API Key: ${userApiKey} <-> ${process.env.API_KEY}`);
     }
 };
 

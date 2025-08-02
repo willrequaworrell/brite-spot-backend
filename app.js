@@ -19,6 +19,7 @@ const PORT = process.env.PORT || 3000;
 
 const apiKeyMiddleware = (req, res, next) => {
     const userApiKey = req.header('x-api-key');
+    console.log(userApiKey, process.env.API_KEY)
 
     if (userApiKey && userApiKey === process.env.API_KEY) { 
         next(); 

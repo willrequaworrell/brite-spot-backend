@@ -27,7 +27,7 @@ const apiKeyMiddleware = (req, res, next) => {
     }
 };
 
-app.use(apiKeyMiddleware)
+// app.use(apiKeyMiddleware)
 
 app.get("/", async (req, res) => {
     res.status(200).send("IT DO BE WORKIN!")

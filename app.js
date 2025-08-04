@@ -30,7 +30,7 @@ const apiKeyMiddleware = (req, res, next) => {
 app.use(apiKeyMiddleware)
 
 app.get("/", async (req, res) => {
-    res.send("IT DO BE WORKIN!")
+    res.status(200).send("IT DO BE WORKIN!")
 })
 
 app.get("/users", async (req, res) => {
